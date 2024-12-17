@@ -40,9 +40,9 @@ def calculate_line_strength(transition_index: int, transition_frequency: float):
 
 def calculate_density_from_temperature(temperature):
     if temperature < 302:
-        p = math.exp(12.6709 - log10(temperature) - 4150 / temperature)
+        p = 10**(12.6709 - log10(temperature) - 4150 / temperature)
     else:
-        p = math.exp(13.178 - 1.35 * log10(temperature) - 4041 / temperature)
+        p = 10**(13.178 - 1.35 * log10(temperature) - 4041 / temperature)
 
     return p / (k * temperature)
 
