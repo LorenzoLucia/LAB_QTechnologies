@@ -1,4 +1,4 @@
-Time - Plot 0	Amplitude - Plot 0
+Time	Amplitude
 0	76
 1	92
 2	73
