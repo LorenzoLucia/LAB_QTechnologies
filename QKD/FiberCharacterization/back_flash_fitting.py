@@ -68,7 +68,7 @@ print("Coincidenze OFF:", coincidenze_OFF, "with len:", len(coincidenze_OFF))
 times = np.linspace(start=0, stop=len(coincidenze_OFF) - 1, num=len(coincidenze_OFF), endpoint=True, retstep=False,
                     dtype=None)
 
-verbose = False
+verbose = True
 
 if verbose:
     plotting(x=times, y=coincidenze_ON, name='coincidences ON', x_axis='times', y_axis='coincidences', marker='none')
