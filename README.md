@@ -8,7 +8,7 @@
 Quantum enabling technologies:
 * SEM and electron beam deposition (Lucy e Matteo): https://www.overleaf.com/7122187962bzmskkwbrwsd#4cf9a9
 * Lithography:
-* Deep reactive ion etching:
+* Deep reactive ion etching (Federica e Gioggio): https://www.overleaf.com/project/676fcf96566bb20eee4a65d1
 
 QKD:
 * COW and OTP: https://it.overleaf.com/5815595952prpvgxrkbtkt#5c8ab9
