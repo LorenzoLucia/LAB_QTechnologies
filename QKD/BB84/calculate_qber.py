@@ -63,7 +63,56 @@ def unc_propagation(unc_wrong_photons, unc_correct_photons):
     return round(val, 1 - int(math.log10(val)))
 
 
+mean_series = {}
+unc_series = {}
+
+
+for file_info in files:
+    file_name = file_info["name"]
+    basis_pair = file_info["basis"]
+
+    # Read the coincidences data from the file
+    coincidences = read_file(file_name)
+
+    # Compute mean and uncertainty for the current basis pair
+    mean_series[basis_pair] = coincidences.mean()
+    unc_series[basis_pair] = coincidences.std() / np.sqrt(len(coincidences))
+
+# Convert to Pandas Series for easier manipulation
+mean_series = pd.Series(mean_series).apply(lambda x: round(x, 2))
+unc_series = pd.Series(unc_series).apply(lambda x: round(x, 2))
+
+# Generalized QBER calculation for all basis pairs
+qber_results = []
+
+for error_basis in mean_series.index:
+    # Correct basis is assumed to be (H, H)
+    correct_basis = (BasisVector.H, BasisVector.H)
+
+    # Calculate QBER for the current pair
+    qber = round(mean_series[error_basis] * 100 / (
+        mean_series[correct_basis] + mean_series[error_basis]), 3)
+
+    # Calculate uncertainty propagation
+    unc_qber = unc_propagation(unc_series[error_basis], unc_series[correct_basis])
+
+    # Store results as a dictionary
+    qber_results.append({
+        "Error Basis": error_basis,
+        "Correct Basis": correct_basis,
+        "QBER (%)": qber,
+        "Uncertainty (%)": unc_qber
+    })
+
+# Convert results into a DataFrame for better readability
+qber_df = pd.DataFrame(qber_results)
+
+# Display the results
+print(qber_df)
+
+'''
 df = pd.DataFrame()
+
 
 for i in files:
     first_vector: BasisVector
@@ -78,9 +127,20 @@ print(mean_series)
 
 # We now have the correct number of significant figures for both the uncertainties and the mean values
 
-qber = round(mean_series[(BasisVector.V, BasisVector.H)] * 100 / (
+
+    #The QBER can be evaluated by doing the fraction Errors/Total. In our case we can suppose that if we have the H,H configuration (in mean) 
+    #all the photons are passing, so the mean will be the correct normalization. If we measure for V,H then, in principle, we have 0 error, but we 
+    #have some non 0 factor that will be mean(V,H); in this case we have to average by summing also this contribution.
+
+qber_VH = round(mean_series[(BasisVector.V, BasisVector.H)] * 100 / (
         mean_series[(BasisVector.H, BasisVector.H)] + mean_series[(BasisVector.V, BasisVector.H)]), 3)
-unc_qber = unc_propagation(unc_series[(BasisVector.V, BasisVector.H)], unc_series[(BasisVector.H, BasisVector.H)])
+unc_qber_VH = unc_propagation(unc_series[(BasisVector.V, BasisVector.H)], unc_series[(BasisVector.H, BasisVector.H)])
+
+qber_HV = round(mean_series[(BasisVector.H, BasisVector.V)] * 100 / (
+        mean_series[(BasisVector.H, BasisVector.H)] + mean_series[(BasisVector.H, BasisVector.V)]), 3)
+unc_qber_HV = unc_propagation(unc_series[(BasisVector.H, BasisVector.V)], unc_series[(BasisVector.H, BasisVector.H)])
 
 # TODO: fix units
-print(f"QBER calculated with H-H and V-H: {qber} +- {unc_qber} %")
+print(f"QBER calculated for V-H: {qber_VH} +- {unc_qber_VH} %")
+
+'''
