@@ -3,6 +3,7 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from scipy import integrate
 from scipy.optimize import curve_fit
 
 detector_efficiency = 0.20
@@ -14,6 +15,10 @@ def reduce_rows(df, initial_index, final_index):
     df["coincidences_OFF"] = df["coincidences_OFF"][initial_index:final_index]
     df["Difference"] = df["Difference"][initial_index:final_index]
     df["Time"] = df["Time"][initial_index:final_index]
+
+
+def skewed_gaussian(x, mu, w, amplitude, a):
+    return amplitude * np.exp(-0.5 * ((x - mu) / (w + a * (x - mu))) ** 2)
 
 
 def gaussian(x, mu, sigma, amplitude):
@@ -38,28 +43,52 @@ data_coinc["Time"] = data_coinc.index
 
 reduce_rows(data_coinc, 3350, 3450)
 
-data_coinc.loc[3396:3400, "Difference"] = 0
+# data_coinc.loc[3396:3400, "Difference"] = 0
 
 guess_params = [
     3405,
     5,
-    1600
+    1600,
+    -2
 ]
-optimal_params, covariance_matrix = curve_fit(gaussian,
+
+data_coinc["DifferenceCut"] = data_coinc["Difference"]
+# We want to remove the reflected non-backfalsh photons and subsitute them with a straight line
+# joining the two extremal points
+left_x = 3397 - 1
+right_x = 3400 + 1
+left_y = data_coinc["DifferenceCut"].iloc[left_x]
+right_y = data_coinc["DifferenceCut"].iloc[right_x]
+angular_coeff = (right_y - left_y) / (right_x - left_x)
+data_coinc["DifferenceCut"].update(
+    pd.Series(
+        [angular_coeff * (x - left_x) + left_y for x in range(left_x + 1, right_x)],
+        index=range(left_x + 1, right_x)
+    ))
+
+optimal_params, covariance_matrix = curve_fit(skewed_gaussian,
                                               data_coinc["Time"].dropna().to_numpy(),
-                                              data_coinc["Difference"].dropna().to_numpy(),
+                                              data_coinc["DifferenceCut"].dropna().to_numpy(),
                                               p0=guess_params)
 
-data_coinc["DifferenceFit"] = gaussian(data_coinc["Time"].to_numpy(),
-                                       optimal_params[0],
-                                       optimal_params[1],
-                                       optimal_params[2])
+data_coinc["DifferenceFit"] = skewed_gaussian(data_coinc["Time"].to_numpy(),
+                                              optimal_params[0],
+                                              optimal_params[1],
+                                              optimal_params[2],
+                                              optimal_params[3])
 
+n_backflash_photons, err = integrate.quad(
+    lambda x: optimal_params[2] * np.exp(
+        -0.5 * ((x - optimal_params[0]) / (optimal_params[1] + optimal_params[3] * (x - optimal_params[0]))) ** 2),
+    3360,
+    3440)
+
+print(f"Integration error: {err}")
 n_photons = 0
 for i in data_counts_on["Col1"]:
     n_photons += i
-
-n_backflash_photons = gaussian_integral(optimal_params[2], optimal_params[1])
+#
+# n_backflash_photons = gaussian_integral(optimal_params[2], optimal_params[1])
 
 print(f"Total number of photons: {n_photons}")
 print(f"Number of backflash photons: {math.ceil(n_backflash_photons)}")

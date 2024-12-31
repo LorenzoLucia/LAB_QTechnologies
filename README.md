@@ -13,7 +13,7 @@ Quantum enabling technologies:
 QKD:
 * COW and OTP: https://it.overleaf.com/5815595952prpvgxrkbtkt#5c8ab9
 * Fiber characterization: 
-* BB84:
+* BB84: https://www.overleaf.com/read/yvgzcqpfqpyr#419e54
 
 
 Atomic spectroscopy:
