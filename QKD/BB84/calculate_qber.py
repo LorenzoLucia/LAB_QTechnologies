@@ -1,6 +1,7 @@
 import math
 from enum import Enum
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
@@ -46,11 +47,17 @@ files = [
     }
 ]
 
-
+'''
 def read_file(file_name):
     with open(file_name, "r") as file:
         temp_df = pd.read_csv(file, names=["CountsA", "CountsB", "Coincidences"], sep="\t")
         return temp_df["Coincidences"]
+'''
+def read_file(file_name):
+    # Also Counts A and B are given
+    with open(file_name, "r") as file:
+        temp_df = pd.read_csv(file, names=["CountsA", "CountsB", "Coincidences"], sep="\t")
+        return temp_df
 
 
 def get_2_significant_figures(x, uncertanties):
@@ -63,6 +70,10 @@ def unc_propagation(unc_wrong_photons, unc_correct_photons):
     return round(val, 1 - int(math.log10(val)))
 
 
+counts_A_list = []
+counts_B_list = []
+coincidences_list = []
+
 mean_series = {}
 unc_series = {}
 
@@ -72,11 +83,20 @@ for file_info in files:
     basis_pair = file_info["basis"]
 
     # Read the coincidences data from the file
-    coincidences = read_file(file_name)
+    data = read_file(file_name)
+    counts_A = data["CountsA"]
+    counts_B = data["CountsB"]
+    coincidences= data["Coincidences"]
+    #coincidences = read_file(file_name)
 
     # Compute mean and uncertainty for the current basis pair
     mean_series[basis_pair] = coincidences.mean()
     unc_series[basis_pair] = coincidences.std() / np.sqrt(len(coincidences))
+    #saved as Bob + alice
+    coincidences_list.append([coincidences, basis_pair[0].value , basis_pair[1].value])
+    counts_A_list.append([counts_A, basis_pair[0].value , basis_pair[1].value])
+    counts_B_list.append([counts_B, basis_pair[0].value , basis_pair[1].value])
+
 
 # Convert to Pandas Series for easier manipulation
 mean_series = pd.Series(mean_series).apply(lambda x: round(x, 2))
@@ -87,29 +107,89 @@ qber_results = []
 
 for error_basis in mean_series.index:
     # Correct basis is assumed to be (H, H)
-    correct_basis = (BasisVector.H, BasisVector.H)
+    if error_basis != (BasisVector.H, BasisVector.H) and error_basis != (BasisVector.A, BasisVector.A) and error_basis != (BasisVector.V, BasisVector.V) and \
+    error_basis != (BasisVector.D, BasisVector.D):
+    
+        correct_basis = (BasisVector.H, BasisVector.H)
 
-    # Calculate QBER for the current pair
-    qber = round(mean_series[error_basis] * 100 / (
-        mean_series[correct_basis] + mean_series[error_basis]), 3)
+        # Calculate QBER for the current pair
+        qber = round(mean_series[error_basis] * 100 / (
+            mean_series[correct_basis]), 3)
 
-    # Calculate uncertainty propagation
-    unc_qber = unc_propagation(unc_series[error_basis], unc_series[correct_basis])
+        # Calculate uncertainty propagation
+        unc_qber = unc_propagation(unc_series[error_basis], unc_series[correct_basis])
 
-    # Store results as a dictionary
-    qber_results.append({
-        "Error Basis": error_basis,
-        "Correct Basis": correct_basis,
-        "QBER (%)": qber,
-        "Uncertainty (%)": unc_qber
-    })
+        # Store results as a dictionary
+        qber_results.append({
+            "Error Basis": error_basis,
+            "Correct Basis": correct_basis,
+            "QBER (%)": qber,
+            "Uncertainty (%)": unc_qber
+        })
 
 # Convert results into a DataFrame for better readability
 qber_df = pd.DataFrame(qber_results)
 
+
+
 # Display the results
 print(qber_df)
+verbose = True
 
+print("coincidendes", len(coincidences_list), "A", len(counts_A_list))
+if verbose:
+    for coincidence, bob_basis, alice_basis in coincidences_list:
+        time = np.linspace(0, len(coincidences)-1, len(coincidences))
+        if len(coincidence) != len(time):
+            coincidence_new = []
+            for i in range(len(time)):
+                coincidence_new.append(coincidence[i])
+            coincidence = coincidence_new
+
+        plt.plot(time, coincidence, label=f'Coincidence ({bob_basis}, {alice_basis})', marker='o', markersize=3)
+
+    # Add labels and title
+    plt.xlabel('counts')
+    plt.ylabel('Coincidences')
+    plt.title('Coincidences')
+    plt.legend(fontsize=7)
+    plt.show()
+
+time = np.linspace(0, len(coincidences)-1, len(coincidences))
+
+for count_A, bob_basis, alice_basis in counts_A_list:
+    if len(count_A) != len(time):
+            count_A_new = []
+            for i in range(len(time)):
+                count_A_new.append(count_A[i])
+            count_A = count_A_new
+
+    plt.plot(time, counts_A, label=f'Basis ({bob_basis}, {alice_basis})', marker='o', markersize=3)
+
+plt.xlabel('counts')
+plt.ylabel('clicks')
+plt.title('Counts A')
+plt.legend(fontsize=7)
+plt.show()
+
+if verbose:
+    for count_B, bob_basis, alice_basis in counts_B_list:
+        time = np.linspace(0, len(coincidences)-1, len(coincidences))
+
+        if len(count_B) > len(time):
+            count_B_new = []
+            for i in range(len(time)):
+                count_B_new.append(count_B[i])
+            count_B = count_B_new
+
+
+        plt.plot(time, count_B, marker='o',label=f'Basis ({bob_basis}, {alice_basis})', markersize=3)
+
+    plt.xlabel('counts')
+    plt.ylabel('clicks')
+    plt.title('Counts B')
+    plt.legend(fontsize=7)
+    plt.show()
 '''
 df = pd.DataFrame()
 
