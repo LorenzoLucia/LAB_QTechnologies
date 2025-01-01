@@ -40,7 +40,7 @@ coincidences_vector = data.iloc[:, 1].tolist()
 verbose = True
 
 if verbose:
-    plotting(x=bins_vector, y=coincidences_vector, name='Coincidences plot', x_axis='Time [bin=100 ps]',
+    plotting(x=bins_vector, y=coincidences_vector, name='Coincidences plot', x_axis='Time [ns]',
              y_axis='Coincidences',
              marker='none')
 
