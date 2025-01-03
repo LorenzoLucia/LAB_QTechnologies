@@ -11,6 +11,8 @@ slope, intercept = np.polyfit(df["Current"][3:].to_numpy(), df["Power"][3:].to_n
 df["PowerFit"] = 0
 df.loc[3:, "PowerFit"] = slope * df["Current"][3:] + intercept
 
+print(f"Threshold current: {-intercept / slope} mA")
+
 df.plot(x="Current", y=["Power", "PowerFit"], style=["x"])
 plt.title(f"Output Power vs Driving Current")
 plt.xlabel("Current [mA]")
