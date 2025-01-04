@@ -243,7 +243,6 @@ for i in range(len(transitions_parameters)):
         f"Atomic density calculated from the fitting for {i}-th transition: {Decimal(n_from_fit[i][0]):.4E} +- {Decimal(n_from_fit[i][1]):.4E} m^(-3)")
 
 print("------------------------------------------------------------")
-print(f"Using delta t 'delta_t_1'")
 val = abs(transitions_parameters[3]['center_frequency']) - abs(transitions_parameters[2]['center_frequency'])
 print(
     f"Small difference 1: EXP {Decimal(val):.4E} Hz - TRUE {Decimal(1167.680e6):.4E} Hz - DIFF {Decimal(1167.680e6 - val):.4E} Hz")
@@ -252,6 +251,6 @@ val = abs(transitions_parameters[1]['center_frequency']) - abs(transitions_param
 print(
     f"Small difference 2: EXP {Decimal(val):.4E} Hz - TRUE {Decimal(1167.680e6):.4E} Hz - DIFF {Decimal(1167.680e6 - val):.4E} Hz")
 
-val = abs(transitions_parameters[2]['center_frequency']) - abs(transitions_parameters[1]['center_frequency'])
+val = abs(transitions_parameters[2]['center_frequency']) - abs(transitions_parameters[0]['center_frequency'])
 print(
     f"Intermediate difference: EXP {Decimal(val):.4E} Hz - TRUE {Decimal(9.192631770e9):.4E} Hz - DIFF {Decimal(9.192631770e9 - val):.4E} Hz")
