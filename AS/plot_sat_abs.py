@@ -12,9 +12,9 @@ AGGREGATION_WINDOW = 1
 MHz = 1e6
 
 # Specify the file name
-filename = 'I.csv'
+filename = 'G.csv'
 
-df = pd.read_csv(filename, names=["Second", "Volt", "Volt.1", "Volt.2"], skiprows=11, skipfooter=0, engine="python")
+df = pd.read_csv(filename, names=["Second", "Volt", "Volt.1", "Volt.2"], skiprows=12, skipfooter=0, engine="python")
 
 print(f"Right peak: smallest time 0.011815 - biggest time 0.011824")
 print(f"Left peak: smallest time 0.010982 - biggest time 0.010998")
@@ -25,22 +25,22 @@ for i in range(len(df.index)):
     aggregation_index.append(int(i / AGGREGATION_WINDOW))
 df["AggregationIndex"] = aggregation_index
 
+
 data = df
 
 n_points = len(data.index)
 print(n_points)
 
-data["Frequency"] = data["Second"] * T_TO_F_COEFFICIENT * 1e-9
+data["Frequency"] = data["Second"].dropna() * T_TO_F_COEFFICIENT
 data["Frequency"] = data["Frequency"] - data["Frequency"].iloc[n_points - 1]
 
-data["OutputPower"] = 1000000 * data["Volt.2"] / (RESPONSIVITY * GAIN)
+data["OutputPower"] = data["Volt.1"] / (RESPONSIVITY * GAIN)
 
-data["Frequency"] = data["Frequency"] - data["Frequency"].iloc[n_points - 1]
 
-data.plot(x="Second", y="Volt.1")  # Use 'Time' column as x-axis
+data.plot(x="Frequency", y="OutputPower")  # Use 'Time' column as x-axis
 plt.title(f"Output Power vs Frequency (aggregation window = {AGGREGATION_WINDOW})")
-plt.xlabel("Time [us]")
-plt.ylabel("Measured Volt [V]")
+plt.xlabel("Frequency [Hz]")
+plt.ylabel("Output Power [W]")
 plt.grid(True)
 plt.show()
 plt.figure(1)
