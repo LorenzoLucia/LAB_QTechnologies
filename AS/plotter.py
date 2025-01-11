@@ -28,15 +28,13 @@ TRANSITIONS = [
 # print(scipy.constants.physical_constants["hbar"])
 CELL_LENGTH = 0.012  # 12 mm
 
-T_TO_F_COEFFICIENT = - 1.661612554743162e12
+T_TO_F_COEFFICIENT = - 1.408540410132690e+12
 print(f"T to F coefficient: {Decimal(T_TO_F_COEFFICIENT):.6E} Hz/s")
 GAIN = 475000  # Taken from datasheet
 RESPONSIVITY = 0.6
 AGGREGATION_WINDOW = 1
 GAMMA = 2 * pi * 4.56e6
 CS_NUCLEAR_SPIN = 7 / 2  # Cs nuclear spin
-termistor_value = 12335
-unc_termistor = 1
 
 # The sensitivity of the oscilloscope data
 UNC_VOLTAGE = 0.01e-3
@@ -93,20 +91,20 @@ def calculate_density_from_gaussians(transition_index: int,
     return numerator / denominator, unc
 
 
-def get_fitting_params(x_to_fit, y_to_fit, degree):
+def get_fitting_params(x_to_fit, y_to_fit, degree, indexes):
     # We only take the ranges outside the absorption peaks
     # between peaks range = 300000:450000
     # end range = 0:200000
     # initial range = 550000:600000
     x_fit = np.concatenate((
-        x_to_fit.iloc[int(550000 / AGGREGATION_WINDOW):int(6000000 / AGGREGATION_WINDOW)],
-        x_to_fit.iloc[int(300000 / AGGREGATION_WINDOW):int(450000 / AGGREGATION_WINDOW)],
-        x_to_fit.iloc[:int(200000 / AGGREGATION_WINDOW)]))
+        x_to_fit.iloc[int(indexes["forth"] / AGGREGATION_WINDOW):],
+        x_to_fit.iloc[int(indexes["second"] / AGGREGATION_WINDOW):int(indexes["third"] / AGGREGATION_WINDOW)],
+        x_to_fit.iloc[:int(indexes["first"] / AGGREGATION_WINDOW)]))
 
     y_fit = np.concatenate((
-        y_to_fit.iloc[int(550000 / AGGREGATION_WINDOW):int(600000 / AGGREGATION_WINDOW)],
-        y_to_fit.iloc[int(300000 / AGGREGATION_WINDOW):int(450000 / AGGREGATION_WINDOW)],
-        y_to_fit.iloc[:int(200000 / AGGREGATION_WINDOW)]))
+        y_to_fit.iloc[int(indexes["forth"] / AGGREGATION_WINDOW):],
+        y_to_fit.iloc[int(indexes["second"] / AGGREGATION_WINDOW):int(indexes["third"] / AGGREGATION_WINDOW)],
+        y_to_fit.iloc[:int(indexes["first"] / AGGREGATION_WINDOW)]))
 
     return np.polyfit(x_fit, y_fit, degree, full=False, cov=True)
 
@@ -127,26 +125,113 @@ def gaussian_func(x, *params):
 a_temp_formula = 0.001129241
 b_temp_formula = 0.0002341077
 c_temp_formula = 0.000000087755
+unc_thermistor = 1
+file_name = 'temperatures/35.csv'
+thermistor_value = {'temperatures/40.csv': 5400,
+                    'temperatures/38.csv': 5800,
+                    'temperatures/35.csv': 6600,
+                    'temperatures/33.csv': 7000,
+                    'temperatures/31.csv': 7800,
+                    'temperatures/29.csv': 8600,
+                    'temperatures/27.csv': 9200,
+                    'temperatures/25.csv': 1000,
+                    'AAAA.csv': 12335}[file_name]
 
-temperature = 1 / (a_temp_formula + b_temp_formula * math.log(termistor_value) + c_temp_formula * (
-        math.log(termistor_value) ** 3))
+temperature_indexes = {
+    293: {
+        "skip_rows": 12,
+        "skip_footer": 100000,
+        "first": 200000,
+        "second": 300000,
+        "third": 450000,
+        "forth": 550000,
+    },
+    298: {
+        "skip_rows": 20012,
+        "skip_footer": 55000,
+        "first": 180000,
+        "second": 270000,
+        "third": 460000,
+        "forth": 540000,
+    },
+    300: {
+        "skip_rows": 20012,
+        "skip_footer": 55000,
+        "first": 180000,
+        "second": 265000,
+        "third": 460000,
+        "forth": 540000,
+    },
+    302: {
+        "skip_rows": 10012,
+        "skip_footer": 65000,
+        "first": 190000,
+        "second": 260000,
+        "third": 470000,
+        "forth": 540000,
+    },
+    304: {
+        "skip_rows": 15012,
+        "skip_footer": 55000,
+        "first": 200000,
+        "second": 275000,
+        "third": 480000,
+        "forth": 545000,
+    },
+    306: {
+        "skip_rows": 15012,
+        "skip_footer": 55000,
+        "first": 200000,
+        "second": 275000,
+        "third": 480000,
+        "forth": 545000,
+    },
+    308: {
+        "skip_rows": 15012,
+        "skip_footer": 55000,
+        "first": 200000,
+        "second": 270000,
+        "third": 480000,
+        "forth": 545000,
+    },
+    311: {
+        "skip_rows": 15012,
+        "skip_footer": 55000,
+        "first": 200000,
+        "second": 270000,
+        "third": 480000,
+        "forth": 545000,
+    },
+    313: {
+        "skip_rows": 15012,
+        "skip_footer": 55000,
+        "first": 200000,
+        "second": 270000,
+        "third": 480000,
+        "forth": 545000,
+    },
+}
+
+temperature = 1 / (a_temp_formula + b_temp_formula * math.log(thermistor_value) + c_temp_formula * (
+        math.log(thermistor_value) ** 3))
 unc_temperature = calc_temperature_unc(
-    termistor_value,
+    thermistor_value,
     a_temp_formula,
     b_temp_formula,
     c_temp_formula,
-    unc_termistor
+    unc_thermistor
 )
 
 print(f"Working at temperature: {temperature} +- {unc_temperature} K")
 
-# TODO: for y = ax^2 + bx + c, i get the unc of a, b and c, then estimate the unc of ax^2, bx and c. Confront with
-#   the sensitivy of the instrumentation, if neglible discard, otherwise i sum the uncertainties
-# Specify the file name
-filename = 'AAAA.csv'
+df = pd.read_csv(file_name,
+                 names=["Second", "Volt", "Volt.1", "Volt.2"],
+                 skiprows=temperature_indexes[round(temperature)]["skip_rows"],
+                 skipfooter=temperature_indexes[round(temperature)]["skip_footer"],
+                 engine="python")
 
-# Read the data, skipping the first 11 rows and last 100000
-df = pd.read_csv(filename, skiprows=11, skipfooter=100000, engine="python")
+# Sin
+
 aggregation_index = []
 for i in range(len(df.index)):
     aggregation_index.append(int(i / AGGREGATION_WINDOW))
@@ -155,7 +240,7 @@ df["AggregationIndex"] = aggregation_index
 data = df.groupby("AggregationIndex", as_index=False).mean()
 
 n_points = len(data.index)
-print(f"Total number of points: {n_points}")
+# print(f"Total number of points: {n_points}")
 
 # Going from seconds to Hz
 data["Frequency"] = data["Second"] * T_TO_F_COEFFICIENT
@@ -167,7 +252,11 @@ unc_frequency = UNC_TIME * T_TO_F_COEFFICIENT
 data["OutputPower"] = data["Volt.2"] / (RESPONSIVITY * GAIN)
 unc_output_power = UNC_VOLTAGE / (RESPONSIVITY * GAIN)
 
-(a_2, a_1, a_0), cov_matrix = get_fitting_params(data["Frequency"], data["OutputPower"], 2)
+(a_2, a_1, a_0), cov_matrix = get_fitting_params(
+    data["Frequency"],
+    data["OutputPower"],
+    2,
+    temperature_indexes[round(temperature)])
 
 unc_a_2, unc_a_1, unc_a_0 = np.sqrt(np.diag(cov_matrix))
 print(f"Linear fit paramaters deviations: {unc_a_2, unc_a_1, unc_a_0}, output power uNC: {unc_output_power}")
@@ -175,19 +264,68 @@ print(f"Linear fit paramaters deviations: {unc_a_2, unc_a_1, unc_a_0}, output po
 data["Fit"] = a_2 * data["Frequency"] ** 2 + a_1 * data["Frequency"] + a_0
 
 data.plot(x="Frequency", y=["OutputPower", "Fit"])  # Use 'Time' column as x-axis
-plt.title(f"Output Power vs Frequency (aggregation window = {AGGREGATION_WINDOW})")
+plt.title(f"Output Power vs Frequency (aggr win = {AGGREGATION_WINDOW}) with T = {round(temperature)} K")
 plt.xlabel("Frequency [Hz]")
 plt.ylabel("Measured Power [W]")
 plt.grid(True)
 plt.show()
 plt.figure(1)
 
-guess_params = [
-    0.25e10, 12, 0.02e10,  # First peak
-    0.35e10, 8, 0.02e10,  # Second peak
-    1.15e10, 3, 0.02e10,  # Third peak
-    1.3e10, 11, 0.02e10,  # Fourth peak
-]
+guess_params = {
+    293: [
+        0.2e10, 12, 0.02e10,  # First peak
+        0.32e10, 8, 0.02e10,  # Second peak
+        0.98e10, 3, 0.02e10,  # Third peak
+        1.1e10, 11, 0.02e10,  # Fourth peak
+    ],
+    298: [
+        0.26e10, 12, 0.02e10,  # First peak
+        0.35e10, 8, 0.02e10,  # Second peak
+        1.1e10, 3, 0.02e10,  # Third peak
+        1.2e10, 11, 0.02e10,  # Fourth peak
+    ],
+    300: [
+        0.26e10, 12, 0.02e10,  # First peak
+        0.35e10, 8, 0.02e10,  # Second peak
+        1.1e10, 3, 0.02e10,  # Third peak
+        1.2e10, 11, 0.02e10,  # Fourth peak
+    ],
+    302: [
+        0.3e10, 12, 0.02e10,  # First peak
+        0.4e10, 8, 0.02e10,  # Second peak
+        1.13e10, 3, 0.02e10,  # Third peak
+        1.22e10, 11, 0.02e10,  # Fourth peak
+    ],
+    304: [
+        0.26e10, 12, 0.02e10,  # First peak
+        0.35e10, 8, 0.02e10,  # Second peak
+        1.1e10, 3, 0.02e10,  # Third peak
+        1.2e10, 11, 0.02e10,  # Fourth peak
+    ],
+    306: [
+        0.26e10, 12, 0.02e10,  # First peak
+        0.35e10, 8, 0.02e10,  # Second peak
+        1.1e10, 3, 0.02e10,  # Third peak
+        1.2e10, 11, 0.02e10,  # Fourth peak
+    ],
+    308: [
+        0.26e10, 12, 0.02e10,  # First peak
+        0.35e10, 8, 0.02e10,  # Second peak
+        1.1e10, 3, 0.02e10,  # Third peak
+        1.2e10, 11, 0.02e10,  # Fourth peak
+    ],
+    311: [
+        0.26e10, 12, 0.02e10,  # First peak
+        0.35e10, 8, 0.02e10,  # Second peak
+        1.1e10, 3, 0.02e10,  # Third peak
+        1.2e10, 11, 0.02e10,  # Fourth peak
+    ],
+    313: [
+        0.26e10, 12, 0.02e10,  # First peak
+        0.35e10, 8, 0.02e10,  # Second peak
+        1.1e10, 3, 0.02e10,  # Third peak
+        1.2e10, 11, 0.02e10,  # Fourth peak
+    ]}
 
 data["TransmissionCoefficient"] = data["OutputPower"] / data["Fit"]
 data["AbsorptionCoefficient"] = np.log(data["TransmissionCoefficient"]) / CELL_LENGTH
@@ -196,21 +334,22 @@ optimal_params, covariance_matrix, _, msg, _ = curve_fit(
     f=gaussian_func,
     xdata=data["Frequency"].to_numpy(),
     ydata=data["AbsorptionCoefficient"].to_numpy(),
-    p0=guess_params,
+    p0=guess_params[round(temperature)],
     full_output=True)
 
 gauss_fit_unc = np.sqrt(np.diag(covariance_matrix))
 
-print(f"Gaussian fit uncertainties: {gauss_fit_unc}")
+# print(f"Gaussian fit uncertainties: {gauss_fit_unc}")
 print(f"Optimal parameters found: {optimal_params}, with msg: {msg}")
 
 data["GaussianFit"] = gaussian_func(data["Frequency"], *optimal_params)
 
 data.plot(x="Frequency", y=["AbsorptionCoefficient", "GaussianFit"])  # Use 'Time' column as x-axis
 # data.plot(x="Frequency", y=["AbsorptionCoefficient"])  # Use 'Time' column as x-axis
-plt.title(f"Absorption Coefficient vs Frequency (aggregation window = {AGGREGATION_WINDOW})")
+plt.title(
+    f"Absorption Coefficient vs Frequency (aggr win = {AGGREGATION_WINDOW}) with T = {round(temperature)} K")
 plt.xlabel("Frequency [Hz]")
-plt.ylabel("Absorption Coefficient")
+plt.ylabel("Absorption Coefficient [1/m]")
 plt.grid(True)
 plt.show()
 
@@ -226,7 +365,7 @@ for i in range(0, len(optimal_params), 3):
 # Uncertainty on the temperature is of 1 degree (we should calculate it from the termistor formula)
 n_from_temp, n_from_temp_unc = calculate_density_from_temperature(temperature, unc_temperature)
 print(
-    f"Atomic density calculated from the cell temperature: {Decimal(n_from_temp):.4E} +- {Decimal(n_from_temp_unc):.4E} m^(-3)")
+    f"Atomic density calculated from the cell temperature: {Decimal(n_from_temp):.8E} +- {Decimal(n_from_temp_unc):.4E} m^(-3)")
 n_from_fit = []
 for i in range(len(transitions_parameters)):
     n_from_fit.append(
@@ -240,7 +379,7 @@ for i in range(len(transitions_parameters)):
         )
     )
     print(
-        f"Atomic density calculated from the fitting for {i}-th transition: {Decimal(n_from_fit[i][0]):.4E} +- {Decimal(n_from_fit[i][1]):.4E} m^(-3)")
+        f"Atomic density calculated from the fitting for {i}-th transition: {Decimal(n_from_fit[i][0]):.6E} +- {Decimal(n_from_fit[i][1]):.4E} m^(-3)")
 
 print("------------------------------------------------------------")
 val = abs(transitions_parameters[3]['center_frequency']) - abs(transitions_parameters[2]['center_frequency'])
