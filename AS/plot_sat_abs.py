@@ -4,15 +4,15 @@ import pandas as pd
 CELL_LENGTH = 0.012  # 12 mm
 # This coefficient has been calculated by averaging the two coefficients obtained for the
 # two couples of neighbouring peaks
-T_TO_F_COEFFICIENT = - 1.661612554743162e12
+T_TO_F_COEFFICIENT = - 1.408540410132690e+12
 
 GAIN = 475000  # Taken from datasheet
 RESPONSIVITY = 0.6
-AGGREGATION_WINDOW = 1
+AGGREGATION_WINDOW = 10
 MHz = 1e6
 
 # Specify the file name
-filename = 'G.csv'
+filename = 'I.csv'
 
 df = pd.read_csv(filename, names=["Second", "Volt", "Volt.1", "Volt.2"], skiprows=12, skipfooter=0, engine="python")
 
