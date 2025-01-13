@@ -11,7 +11,7 @@ Quantum enabling technologies:
 * Deep reactive ion etching (Federica e Gioggio): https://www.overleaf.com/project/676fcf96566bb20eee4a65d1
 
 QKD:
-* COW and OTP: https://it.overleaf.com/5815595952prpvgxrkbtkt#5c8ab9
+* COW and OTP: https://www.overleaf.com/read/pfysbnthhrcz#eca62e
 * Fiber characterization: https://www.overleaf.com/project/6773cb6508e1f4d3ec9ab0b4
 * BB84: https://www.overleaf.com/read/yvgzcqpfqpyr#419e54
 
