@@ -40,8 +40,13 @@ CS_NUCLEAR_SPIN = 7 / 2  # Cs nuclear spin
 UNC_VOLTAGE = 0.01e-3
 UNC_TIME = 0.01e-6
 
+CS_ATOMIC_MASS = 132.90545 * 1.67377e-27
 
-# S_ge = line strength
+
+def calculate_sigma(frequency, temp):
+    return math.sqrt(k * temp / (CS_ATOMIC_MASS * c ** 2)) * 2 * pi * frequency
+
+
 def calculate_line_strength(transition_index: int, transition_frequency: float):
     c_f_squared = TRANSITIONS[transition_index]["c_f_squared"]
     return c_f_squared * 9 * pi * epsilon_0 * hbar * (c ** 3) * GAMMA / (transition_frequency ** 3)
@@ -126,7 +131,7 @@ a_temp_formula = 0.001129241
 b_temp_formula = 0.0002341077
 c_temp_formula = 0.000000087755
 unc_thermistor = 1
-file_name = 'temperatures/35.csv'
+file_name = 'temperatures/40.csv'
 thermistor_value = {'temperatures/40.csv': 5400,
                     'temperatures/38.csv': 5800,
                     'temperatures/35.csv': 6600,
@@ -134,7 +139,7 @@ thermistor_value = {'temperatures/40.csv': 5400,
                     'temperatures/31.csv': 7800,
                     'temperatures/29.csv': 8600,
                     'temperatures/27.csv': 9200,
-                    'temperatures/25.csv': 1000,
+                    'temperatures/25.csv': 10000,
                     'AAAA.csv': 12335}[file_name]
 
 temperature_indexes = {
@@ -279,10 +284,10 @@ guess_params = {
         1.1e10, 11, 0.02e10,  # Fourth peak
     ],
     298: [
-        0.26e10, 12, 0.02e10,  # First peak
-        0.35e10, 8, 0.02e10,  # Second peak
-        1.1e10, 3, 0.02e10,  # Third peak
-        1.2e10, 11, 0.02e10,  # Fourth peak
+        0.29e10, 17.5, 0.02e10,  # First peak
+        0.37e10, 11, 0.02e10,  # Second peak
+        1.05e10, 6, 0.02e10,  # Third peak
+        1.15e10, 16, 0.02e10,  # Fourth peak
     ],
     300: [
         0.26e10, 12, 0.02e10,  # First peak
@@ -293,7 +298,7 @@ guess_params = {
     302: [
         0.3e10, 12, 0.02e10,  # First peak
         0.4e10, 8, 0.02e10,  # Second peak
-        1.13e10, 3, 0.02e10,  # Third peak
+        1.08e10, 6, 0.02e10,  # Third peak
         1.22e10, 11, 0.02e10,  # Fourth peak
     ],
     304: [
@@ -305,25 +310,25 @@ guess_params = {
     306: [
         0.26e10, 12, 0.02e10,  # First peak
         0.35e10, 8, 0.02e10,  # Second peak
-        1.1e10, 3, 0.02e10,  # Third peak
+        1.05e10, 8, 0.02e10,  # Third peak
         1.2e10, 11, 0.02e10,  # Fourth peak
     ],
     308: [
         0.26e10, 12, 0.02e10,  # First peak
         0.35e10, 8, 0.02e10,  # Second peak
-        1.1e10, 3, 0.02e10,  # Third peak
+        1.05e10, 8, 0.02e10,  # Third peak
         1.2e10, 11, 0.02e10,  # Fourth peak
     ],
     311: [
         0.26e10, 12, 0.02e10,  # First peak
         0.35e10, 8, 0.02e10,  # Second peak
-        1.1e10, 3, 0.02e10,  # Third peak
+        1.05e10, 8, 0.02e10,  # Third peak
         1.2e10, 11, 0.02e10,  # Fourth peak
     ],
     313: [
         0.26e10, 12, 0.02e10,  # First peak
         0.35e10, 8, 0.02e10,  # Second peak
-        1.1e10, 3, 0.02e10,  # Third peak
+        1.05e10, 8, 0.02e10,  # Third peak
         1.2e10, 11, 0.02e10,  # Fourth peak
     ]}
 
@@ -393,3 +398,25 @@ print(
 val = abs(transitions_parameters[2]['center_frequency']) - abs(transitions_parameters[0]['center_frequency'])
 print(
     f"Intermediate difference: EXP {Decimal(val):.4E} Hz - TRUE {Decimal(9.192631770e9):.4E} Hz - DIFF {Decimal(9.192631770e9 - val):.4E} Hz")
+
+theoretical_sigma_1 = calculate_sigma(TRANSITIONS[0]["frequency"], temperature)
+experimental_sigma_1 = transitions_parameters[0]['sigma_d']
+
+theoretical_sigma_2 = calculate_sigma(TRANSITIONS[1]["frequency"], temperature)
+experimental_sigma_2 = transitions_parameters[1]['sigma_d']
+
+theoretical_sigma_3 = calculate_sigma(TRANSITIONS[2]["frequency"], temperature)
+experimental_sigma_3 = transitions_parameters[2]['sigma_d']
+
+theoretical_sigma_4 = calculate_sigma(TRANSITIONS[3]["frequency"], temperature)
+experimental_sigma_4 = transitions_parameters[3]['sigma_d']
+
+print("------------------------------------------------")
+print(
+    f"1st: Experimental sigma: {Decimal(experimental_sigma_1):.6E} Hz, Theoretical sigma: {Decimal(theoretical_sigma_1):.6E} Hz")
+print(
+    f"2st: Experimental sigma: {Decimal(experimental_sigma_2):.6E} Hz, Theoretical sigma: {Decimal(theoretical_sigma_2):.6E} Hz")
+print(
+    f"3st: Experimental sigma: {Decimal(experimental_sigma_3):.6E} Hz, Theoretical sigma: {Decimal(theoretical_sigma_3):.6E} Hz")
+print(
+    f"4st: Experimental sigma: {Decimal(experimental_sigma_4):.6E} Hz, Theoretical sigma: {Decimal(theoretical_sigma_4):.6E} Hz")
